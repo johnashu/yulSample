@@ -15,12 +15,11 @@ contract YulSampleTest is Test {
         assertEq(yulSample.addOneAnTwo(), 3);
     }
 
-    function testHowManyEvens(
-    ) external {
+    function testHowManyEvens() external {
         assertEq(yulSample.howManyEvens(0, 20), 10);
     }
 
-    function testHowManyEvensMAX() external  {
+    function testHowManyEvensMAX() external {
         assertEq(yulSample.howManyEvens(0, 200000), 50);
     }
 
@@ -35,4 +34,23 @@ contract YulSampleTest is Test {
         assertEq(y, uint(16));
         assertEq(z, uint(1));
     }
+
+    function testDynamicArray(uint value) external {
+        assertEq(yulSample.getValInHex(6), bytes32(0x00));
+        yulSample.addToDynamicArray(value, 0, 6);   
+
+        emit log_bytes32(yulSample.getValInHex(6));    
+
+        // assertEq(yulSample.getValInHex(6), bytes32(0x01));
+        assertEq(yulSample.getValFromDynamicArray(0, 6), value);
+    }
+
+    function testGetSlot() public {
+         uint slot = yulSample.getSlot();
+         emit log_uint(slot);
+    }
+
 }
+
+
+

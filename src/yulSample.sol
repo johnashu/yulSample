@@ -4,22 +4,66 @@ pragma solidity ^0.8.13;
 contract YulSample {
     // slot 0
     // 0x0000000000000000000000000000000000000000000000000000000000000100
-    uint256 var1 = 256;
+    uint256 public var1 = 256;
 
     // slot 1
     // 0x0000000000000000000000009acc1d6aa9b846083e8a497a661853aae07f0f00
-    address var2 = 0x9ACc1d6Aa9b846083E8a497A661853aaE07F0F00;
+    address public var2 = 0x9ACc1d6Aa9b846083E8a497A661853aaE07F0F00;
 
     // slot 2
     // 0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff
-    bytes32 var3 =
+    bytes32 public var3 =
         0xffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff;
 
     // slot 3
     // 0x0000000000000000000000000000000200000000000000000000000000000001
     // 0x000000000000000000000000000002 and 0x000000000000000000000000000001
-    uint128 var4 = 1;
-    uint128 var5 = 2;
+    uint128 public var4 = 1;
+    uint128 public var5 = 2;
+
+    // slot 4 & 5
+    // 0x0000000000000000000000000000000100000000000000000000000000000000
+    // 0x0000000000000000000000000000000300000000000000000000000000000002
+    uint128[4] public var6 = [0, 1, 2, 3];
+
+    // slot 6
+    // getValInHex(6) = 0x00 - unknown length as it is a dynamic array
+    // the keccak256 hash of the current storage slot (slot 6) is
+    // used as the start index of the array.
+    uint256[] public var7;
+
+    // slot 7
+    mapping(uint256 => uint256) var8;
+    
+    constructor(){
+        var8[uint(1)] = uint(2);
+    }
+
+    function getSlot() external view returns (uint slot) {
+        assembly {
+            slot := var7.slot
+        }
+    }
+
+    function addToDynamicArray(
+        uint256 value,
+        uint targetIndex,
+        uint256 slot
+    ) external {
+        // get hash of slot for start index
+        bytes32 startIndex = keccak256(abi.encode(slot));
+        assembly {
+            // get the length of the array
+            let len := sload(startIndex)
+            // check if targetIndex is less than or equal to len
+            let le := or(lt(targetIndex, len), eq(targetIndex, len))
+            if le {
+                let ptr := add(startIndex, targetIndex)
+                sstore(ptr, value)
+            }
+        }
+    }
+
 
     // input is the storage slot that we want to read
     function getValInHex(uint256 y) external view returns (bytes32) {
@@ -59,6 +103,24 @@ contract YulSample {
             z := sload(0)
         }
         return (x, y, z);
+    }
+
+    function getValFromDynamicArray(
+        uint256 targetIndex,
+         uint256 slot
+    ) external view returns (uint256) {
+
+        // get hash of slot for start index
+        bytes32 startIndex = keccak256(abi.encode(slot));
+
+        uint256 ans;
+
+        assembly {
+            // adds start index and target index to get storage location. Then loads corresponding storage slot
+            ans := sload(add(startIndex, targetIndex))
+        }
+
+        return ans;
     }
 
     function addOneAnTwo() external pure returns (uint256) {
