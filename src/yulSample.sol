@@ -145,14 +145,14 @@ contract YulSample {
     }
 
     function getNestedMappedValue(
-        uint256 index,
-        uint256 key,
+        uint256 key1,
+        uint256 key2,
         uint256 slot
     ) external view returns (uint256) {
 
         // hashs the key and uint256 value of slot
         bytes32 location = keccak256(
-            abi.encode(key, keccak256(abi.encode(index, slot)))
+            abi.encode(key2, keccak256(abi.encode(key1, slot)))
         );
 
         uint256 result;
