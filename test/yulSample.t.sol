@@ -49,8 +49,27 @@ contract YulSampleTest is Test {
         assertEq(yulSample.getNestedMappedValue(0, 1, 8), 2);
     }
 
+    function testGetUint128FromSharedSlot() public {
+        (uint128 var1, uint128 var2) = yulSample.getUint128FromSharedSlot(3);
+        assertEq(var1, uint128(1));
+        assertEq(var2, uint128(2));
+    }
+
+    function testWriteFirstValue() public {
+        assertEq(yulSample.var4(), 1);
+        yulSample.writeFirstValue(3, 2123);
+        assertEq(yulSample.var4(), 2123);
+    }
+
+    function testWriteSecondValue() public {
+        assertEq(yulSample.var5(), 2);
+        yulSample.writeSecondValue(3, 10);
+        assertEq(yulSample.var5(), 10);
+    }
+
     function testGetSlot() public {
-        uint slot = yulSample.getSlot();
+        (uint slot, uint offset) = yulSample.getSlot();
         emit log_uint(slot);
+        emit log_uint(offset);
     }
 }

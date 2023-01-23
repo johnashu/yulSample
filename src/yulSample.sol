@@ -43,9 +43,10 @@ contract YulSample {
         var9[0][1] = uint(2);
     }
 
-    function getSlot() external view returns (uint slot) {
+    function getSlot() external view returns (uint slot, uint offset) {
         assembly {
-            slot := var7.slot
+            slot := var5.slot
+            offset := var5.offset
         }
     }
 
@@ -93,7 +94,7 @@ contract YulSample {
             // gets slot of var5
             let slot := var5.slot
 
-            // gets offset of var5
+            // gets offset of secondvalue
             let offset := var5.offset
 
             // assigns x and y from solidity to slot and offset
@@ -149,7 +150,6 @@ contract YulSample {
         uint256 key2,
         uint256 slot
     ) external view returns (uint256) {
-
         // hashs the key and uint256 value of slot
         bytes32 location = keccak256(
             abi.encode(key2, keccak256(abi.encode(key1, slot)))
@@ -163,6 +163,71 @@ contract YulSample {
         }
 
         return result;
+    }
+
+    function getUint128FromSharedSlot(
+        uint _slot
+    ) external view returns (uint128, uint128) {
+        uint128 firstVar;
+        uint128 secondVar;
+
+        bytes32 mask = 0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff;
+        uint offset = 16; // half of 32 bytes..
+
+        assembly {
+            // load the slot from storage.
+            let slot := sload(_slot)
+            // the and() operation sets secondVar to 0x00
+            firstVar := and(slot, mask)
+
+            // we shift secondVar to firstVar's position
+            // secondVar's old position becomes 0x00
+            secondVar := shr(mul(offset, 8), slot)
+        }
+
+        return (firstVar, secondVar);
+    }
+
+    function writeFirstValue(uint _slot, uint256 newVal) external {
+        uint offset = 16; // half of 32 bytes..
+        assembly {
+            // load slot
+            let slot := sload(_slot)
+
+            // isolate firstvalue by shifting left 128 bits
+            let shiftedSecondVal := shl(128, mul(offset, 8))
+
+            // combine new value with isolated firstvalue
+            let newValueForSlot := or(shiftedSecondVal, newVal)
+
+            // store new value to slot
+            sstore(_slot, newValueForSlot)
+        }
+    }
+
+    function writeSecondValue(uint _slot, uint256 newVal) external {
+        uint offset = 16; // half of 32 bytes..
+        assembly {
+            // load slot
+            let slot := sload(_slot)
+
+            // mask for clearing secondvalue
+            let
+                mask
+            := 0x00000000000000000000000000000000ffffffffffffffffffffffffffffffff
+
+            // isolate firstvalue
+            let clearedFirstValue := and(slot, mask)
+
+            // format new value into secondvalue position
+            let shiftedVal := shl(mul(offset, 8), newVal)
+
+            // combine new value with isolated firstvalue
+            let newValueForSlot := or(shiftedVal, clearedFirstValue)
+
+            // store new value to slot
+            sstore(_slot, newValueForSlot)
+        }
     }
 
     function addOneAnTwo() external pure returns (uint256) {
