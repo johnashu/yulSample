@@ -23,9 +23,13 @@ contract YulSampleTest is Test {
     }
 
     function testHowManyEvensMAX(
-        uint startNum,
-        uint endNum
+
     ) external returns (uint) {
         assertEq(yulSample.howManyEvens(0, 200000), 50);
+    }
+
+    function testGetValInHex() external {
+        bytes32 slot = yulSample.getValInHex(uint(0));
+        assertEq(uint(slot), 256);
     }
 }
