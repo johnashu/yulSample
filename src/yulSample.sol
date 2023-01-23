@@ -34,9 +34,13 @@ contract YulSample {
 
     // slot 7
     mapping(uint256 => uint256) var8;
-    
-    constructor(){
+
+    // slot 8
+    mapping(uint256 => mapping(uint256 => uint256)) var9;
+
+    constructor() {
         var8[uint(1)] = uint(2);
+        var9[0][1] = uint(2);
     }
 
     function getSlot() external view returns (uint slot) {
@@ -63,7 +67,6 @@ contract YulSample {
             }
         }
     }
-
 
     // input is the storage slot that we want to read
     function getValInHex(uint256 y) external view returns (bytes32) {
@@ -107,34 +110,73 @@ contract YulSample {
 
     function getValFromDynamicArray(
         uint256 targetIndex,
-         uint256 slot
+        uint256 slot
     ) external view returns (uint256) {
-
         // get hash of slot for start index
         bytes32 startIndex = keccak256(abi.encode(slot));
 
-        uint256 ans;
+        uint256 result;
 
         assembly {
             // adds start index and target index to get storage location. Then loads corresponding storage slot
-            ans := sload(add(startIndex, targetIndex))
+            result := sload(add(startIndex, targetIndex))
         }
 
-        return ans;
+        return result;
+    }
+
+    function getMappedValue(
+        uint256 key,
+        uint256 slot
+    ) external view returns (uint256) {
+        // the code looks very similar to getting an element from a dynamic array. The main difference is that we hash the key and slot together.
+
+        // hashs the key and uint256 value of slot
+        bytes32 location = keccak256(abi.encode(key, slot));
+
+        uint256 result;
+
+        // loads storage slot of location and returns result
+        assembly {
+            result := sload(location)
+        }
+
+        return result;
+    }
+
+    function getNestedMappedValue(
+        uint256 index,
+        uint256 key,
+        uint256 slot
+    ) external view returns (uint256) {
+
+        // hashs the key and uint256 value of slot
+        bytes32 location = keccak256(
+            abi.encode(key, keccak256(abi.encode(index, slot)))
+        );
+
+        uint256 result;
+
+        // loads storage slot of location and returns result
+        assembly {
+            result := sload(location)
+        }
+
+        return result;
     }
 
     function addOneAnTwo() external pure returns (uint256) {
         // We can access variables from solidity inside our Yul code
-        uint256 ans;
+        uint256 result;
 
         assembly {
             // assigns variables in Yul
             let one := 1
             let two := 2
             // adds the two variables together
-            ans := add(one, two)
+            result := add(one, two)
         }
-        return ans;
+        return result;
     }
 
     function howManyEvens(
@@ -142,7 +184,7 @@ contract YulSample {
         uint256 endNum
     ) external pure returns (uint256) {
         // the value we will return
-        uint256 ans;
+        uint256 result;
         uint MAX = 100;
 
         assembly {
@@ -160,7 +202,7 @@ contract YulSample {
                 // checks if i % 2 == 0
                 // we could of used iszero `iszero(mod(i, 2))`, but I wanted to show you eq()
                 if eq(mod(i, 2), 0) {
-                    ans := add(ans, 1)
+                    result := add(result, 1)
                 }
 
                 if gt(i, MAX) {
@@ -169,6 +211,6 @@ contract YulSample {
             }
         }
 
-        return ans;
+        return result;
     }
 }

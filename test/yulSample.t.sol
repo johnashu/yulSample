@@ -37,20 +37,20 @@ contract YulSampleTest is Test {
 
     function testDynamicArray(uint value) external {
         assertEq(yulSample.getValInHex(6), bytes32(0x00));
-        yulSample.addToDynamicArray(value, 0, 6);   
-
-        emit log_bytes32(yulSample.getValInHex(6));    
-
-        // assertEq(yulSample.getValInHex(6), bytes32(0x01));
+        yulSample.addToDynamicArray(value, 0, 6);
         assertEq(yulSample.getValFromDynamicArray(0, 6), value);
     }
 
-    function testGetSlot() public {
-         uint slot = yulSample.getSlot();
-         emit log_uint(slot);
+    function testGetMappedValue() public {
+        assertEq(yulSample.getMappedValue(1, 7), 2);
     }
 
+    function testGetNestedMappedValue() public {
+        assertEq(yulSample.getNestedMappedValue(0, 1, 8), 2);
+    }
+
+    function testGetSlot() public {
+        uint slot = yulSample.getSlot();
+        emit log_uint(slot);
+    }
 }
-
-
-
