@@ -32,4 +32,8 @@ contract YulSampleTest is Test {
         bytes32 slot = yulSample.getValInHex(uint(0));
         assertEq(uint(slot), 256);
     }
+
+    function testReadAndWriteStorage() external {
+        assertEq(yulSample.readAndWriteToStorage(), (3, 16, 1));
+    }
 }
