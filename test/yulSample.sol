@@ -16,15 +16,11 @@ contract YulSampleTest is Test {
     }
 
     function testHowManyEvens(
-        uint startNum,
-        uint endNum
-    ) external returns (uint) {
+    ) external {
         assertEq(yulSample.howManyEvens(0, 20), 10);
     }
 
-    function testHowManyEvensMAX(
-
-    ) external returns (uint) {
+    function testHowManyEvensMAX() external  {
         assertEq(yulSample.howManyEvens(0, 200000), 50);
     }
 
@@ -34,6 +30,9 @@ contract YulSampleTest is Test {
     }
 
     function testReadAndWriteStorage() external {
-        assertEq(yulSample.readAndWriteToStorage(), (3, 16, 1));
+        (uint256 x, uint256 y, uint256 z) = yulSample.readAndWriteToStorage();
+        assertEq(x, uint(3));
+        assertEq(y, uint(16));
+        assertEq(z, uint(1));
     }
 }
