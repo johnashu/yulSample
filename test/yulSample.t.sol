@@ -73,19 +73,14 @@ contract YulSampleTest is Test {
         assertEq(var2, uint256(64));
     }
 
-    function createArray(uint range) public returns (uint256[] memory) {
-        uint256[] memory arr = new uint256[](range);
 
-        unchecked {
-            for (uint i = 0; i < range; i++) {
-                arr[i] = i;
-            }
-        }
-        return arr;
-    }
 
     function testGetDynamicArray() public {
-        assertEq(yulSample.getDynamicArray(createArray(4)), createArray(5));
+        assertEq(
+            yulSample.createArray(5),
+            yulSample.getDynamicArray((yulSample.createDynamicArray(5)))
+            
+        );
     }
 
     function testGetSlot() public {

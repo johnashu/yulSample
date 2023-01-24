@@ -59,6 +59,54 @@ contract YulSample {
         }
     }
 
+    function createArray(uint range) public returns (uint256[] memory) {
+        uint256[] memory arr = new uint256[](range);
+
+        unchecked {
+            for (uint i = 0; i < range; i++) {
+                arr[i] = i;
+            }
+        }
+        return arr;
+    }
+
+    function createDynamicArray(
+        uint range
+    ) public view returns (uint256[] memory) {
+        uint MAX = 22; // First 22 words are linear, then quadratic.. Set only for MAX uint256..
+
+        if (range > MAX) {
+            range = MAX;
+        }
+
+        assembly {
+            // Create an dynamic sized array manually.
+            // Don't need to define the data type here as the EVM will prefix it
+            let location := mload(0x40) // Get the highest available block of memory
+
+            // mstore(location, 0) // Set size to range
+
+            for {
+                let i := 0
+            } lt(i, range) {
+                i := add(i, 1)
+            } {
+                // get next available memory location.
+                let nextMemoryLocation := add(
+                    add(location, 0x20), // add 32 bytes to the location (skip the length of the array)
+                    mul(0x20, add(i, 1)) // multiplying the length of the array by 32 bytes. This advances us to the next memory location AFTER our array.
+                )
+                // stores new value to memory
+                mstore(nextMemoryLocation, i)
+
+                mstore(location, add(i, 1)) // Set size to range
+
+                mstore(0x40, mul(0x20, add(i, 2))) // Update the msize offset to be our memory reference plus the amount of bytes we're using
+            }
+            return(add(location, 0x20), mul(range, 0x20))
+        }
+    }
+
     function getDynamicArray(
         uint256[] memory arr
     ) external view returns (uint256[] memory) {
