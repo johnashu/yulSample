@@ -38,15 +38,60 @@ contract YulSample {
     // slot 8
     mapping(uint256 => mapping(uint256 => uint256)) var9;
 
+    struct Var10 {
+        uint256 subVar1;
+        uint256 subVar2;
+    }
+
     constructor() {
         var8[uint(1)] = uint(2);
         var9[0][1] = uint(2);
     }
 
-    function getSlot() external view returns (uint slot, uint offset) {
+    function getStructValues() external pure returns (uint256, uint256) {
+        // initialize struct
+        Var10 memory s;
+        s.subVar1 = 32; // 0x80 - 0xa0
+        s.subVar2 = 64; // 0xa0 - 0xc0
+
         assembly {
-            slot := var5.slot
-            offset := var5.offset
+            return(0x80, 0xc0)
+        }
+    }
+
+    function getDynamicArray(
+        uint256[] memory arr
+    ) external view returns (uint256[] memory) {
+        assembly {
+            // where array is stored in memory (0x80)
+            let location := arr
+
+            // length of array is stored at arr (4)
+            let length := mload(arr)
+
+            // get next available memory location.
+            let nextMemoryLocation := add(
+                add(location, 0x20), // add 32 bytes to the location (skip the length of the array)
+                mul(length, 0x20) // multiplying the length of the array by 32 bytes. This advances us to the next memory location AFTER our array.
+            )
+
+            // stores new value to memory
+            mstore(nextMemoryLocation, 4)
+
+            // increment length by 1
+            length := add(length, 1)
+
+            // store new length value to location (0x80)
+            mstore(location, add(length, 1))
+
+            // update free memory pointer - There may be other operations required in the contract.
+            mstore(0x40, 0x140)
+
+            // Return the updated array.
+            //  we have location which is 1 word (32 bytes)
+            // then length (5) x 1 word (0x20)
+            // memory used = 0x80 - 0x120
+            return(add(location, 0x20), mul(length, 0x20))
         }
     }
 
@@ -67,46 +112,6 @@ contract YulSample {
                 sstore(ptr, value)
             }
         }
-    }
-
-    // input is the storage slot that we want to read
-    function getValInHex(uint256 y) external view returns (bytes32) {
-        // since Yul works with hex we want to return in bytes
-        bytes32 x;
-
-        assembly {
-            // assign value of slot y to x
-            x := sload(y)
-        }
-
-        return x;
-    }
-
-    function readAndWriteToStorage()
-        external
-        returns (uint256, uint256, uint256)
-    {
-        uint256 x;
-        uint256 y;
-        uint256 z;
-
-        assembly {
-            // gets slot of var5
-            let slot := var5.slot
-
-            // gets offset of secondvalue
-            let offset := var5.offset
-
-            // assigns x and y from solidity to slot and offset
-            x := slot
-            y := offset
-            // stores value 1 in slot 0
-            sstore(0, 1)
-
-            // assigns z to the value from slot 0
-            z := sload(0)
-        }
-        return (x, y, z);
     }
 
     function getValFromDynamicArray(
@@ -230,6 +235,53 @@ contract YulSample {
         }
     }
 
+    function getSlot() external pure returns (uint slot, uint offset) {
+        assembly {
+            slot := var5.slot
+            offset := var5.offset
+        }
+    }
+
+    // input is the storage slot that we want to read
+    function getValInHex(uint256 y) external view returns (bytes32) {
+        // since Yul works with hex we want to return in bytes
+        bytes32 x;
+
+        assembly {
+            // assign value of slot y to x
+            x := sload(y)
+        }
+
+        return x;
+    }
+
+    function readAndWriteToStorage()
+        external
+        returns (uint256, uint256, uint256)
+    {
+        uint256 x;
+        uint256 y;
+        uint256 z;
+
+        assembly {
+            // gets slot of var5
+            let slot := var5.slot
+
+            // gets offset of secondvalue
+            let offset := var5.offset
+
+            // assigns x and y from solidity to slot and offset
+            x := slot
+            y := offset
+            // stores value 1 in slot 0
+            sstore(0, 1)
+
+            // assigns z to the value from slot 0
+            z := sload(0)
+        }
+        return (x, y, z);
+    }
+
     function addOneAnTwo() external pure returns (uint256) {
         // We can access variables from solidity inside our Yul code
         uint256 result;
@@ -270,6 +322,7 @@ contract YulSample {
                     result := add(result, 1)
                 }
 
+                // Break here if it exceeds the defined max iterations.
                 if gt(i, MAX) {
                     break
                 }
